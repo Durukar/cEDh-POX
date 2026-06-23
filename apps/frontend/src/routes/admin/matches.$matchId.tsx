@@ -3,6 +3,6 @@ import { adminIndexRoute } from './index'
 
 export const adminMatchRoute = createRoute({
   getParentRoute: () => adminIndexRoute,
-  path: '/matches/$matchId',
+  path: 'matches/$matchId',
   component: () => <div>Match detail</div>,
 })
