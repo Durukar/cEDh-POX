@@ -134,7 +134,7 @@ admin.put('/matches/:id/entries/:entryId', async (c) => {
   const newCommander = 'commander_name' in body ? (body.commander_name ?? null) : existing.commander_name
   const newPoints = calcPoints(newResult, newStatus)
 
-  const updated = await db
+  const result = await db
     .prepare(
       `UPDATE match_entries
        SET commander_name = ?, status = ?, result = ?, points = ?
@@ -142,7 +142,7 @@ admin.put('/matches/:id/entries/:entryId', async (c) => {
        RETURNING id, match_id, player_id, commander_name, status, result, points`
     )
     .bind(newCommander, newStatus, newResult, newPoints, entryId)
-    .first<{
+    .all<{
       id: number
       match_id: number
       player_id: number
@@ -152,10 +152,13 @@ admin.put('/matches/:id/entries/:entryId', async (c) => {
       points: number
     }>()
 
+  const updated = result.results[0]
+  if (!updated) return c.json({ error: 'Entry not found' }, 404)
+
   // Fetch player name for response
   const player = await db
     .prepare('SELECT name FROM players WHERE id = ?')
-    .bind(updated!.player_id)
+    .bind(updated.player_id)
     .first<{ name: string }>()
 
   return c.json({ ...updated, player_name: player?.name ?? null })

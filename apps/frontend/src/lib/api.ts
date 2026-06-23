@@ -19,7 +19,7 @@ export async function fetchMatches(): Promise<Match[]> {
 }
 
 // Admin API functions — attach X-Admin-Token header
-export async function createMatch(data: { match_number: number; notes?: string }): Promise<Match> {
+export async function createMatch(data: { match_number: number; notes?: string }): Promise<Omit<Match, 'entries'>> {
   const res = await fetch(`${BASE}/api/admin/matches`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Admin-Token': getAdminToken() },

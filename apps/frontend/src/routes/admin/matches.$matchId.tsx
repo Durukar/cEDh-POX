@@ -11,6 +11,12 @@ export const adminMatchRoute = createRoute({
 function MatchDetailPage() {
   const { matchId } = useParams({ from: '/admin/matches/$matchId' })
   const navigate = useNavigate()
+  const hasToken = !!localStorage.getItem('admin_token')
+
+  if (!hasToken) {
+    navigate({ to: '/admin' })
+    return null
+  }
 
   function handleUnauthorized() {
     localStorage.removeItem('admin_token')

@@ -25,7 +25,7 @@ export function CreateMatchForm({ onUnauthorized }: { onUnauthorized: () => void
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const num = parseInt(matchNumber)
-    if (!num || isNaN(num)) { setError('Match number must be a valid integer'); return }
+    if (isNaN(num) || num <= 0) { setError('Match number must be a positive integer'); return }
     mutation.mutate({ match_number: num, notes: notes || undefined })
   }
 
