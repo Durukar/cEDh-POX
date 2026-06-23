@@ -9,10 +9,5 @@ export const indexRoute = createRoute({
 })
 
 function LeaderboardPage() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Leaderboard</h1>
-      <LeaderboardTable />
-    </div>
-  )
+  return <LeaderboardTable />
 }

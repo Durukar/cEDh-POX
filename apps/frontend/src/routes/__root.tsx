@@ -2,16 +2,23 @@ import { createRootRoute, Outlet, Link } from '@tanstack/react-router'
 
 export const rootRoute = createRootRoute({
   component: () => (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <nav className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="text-lg font-bold tracking-tight text-white hover:text-zinc-300">
-          cEDh-POX
-        </Link>
-        <Link to="/admin" className="text-sm text-zinc-500 hover:text-zinc-300">
-          Admin
-        </Link>
-      </nav>
-      <main className="max-w-5xl mx-auto px-6 py-8">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border/40 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+          <Link to="/" className="font-bold text-base tracking-tight text-foreground hover:text-foreground/80 transition-colors">
+            cEDh-POX
+          </Link>
+          <nav className="flex items-center gap-6">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Leaderboard
+            </Link>
+            <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Admin
+            </Link>
+          </nav>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto px-6 py-8">
         <Outlet />
       </main>
     </div>
