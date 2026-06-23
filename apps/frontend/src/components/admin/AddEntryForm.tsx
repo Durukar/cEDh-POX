@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createEntry } from '../../lib/api'
 
-export function AddEntryForm({ matchId }: { matchId: number }) {
+interface AddEntryFormProps {
+  matchId: number
+  onUnauthorized: () => void
+}
+
+export function AddEntryForm({ matchId, onUnauthorized }: AddEntryFormProps) {
   const qc = useQueryClient()
   const [playerName, setPlayerName] = useState('')
   const [commander, setCommander] = useState('')
@@ -21,7 +26,10 @@ export function AddEntryForm({ matchId }: { matchId: number }) {
       qc.invalidateQueries({ queryKey: ['admin-matches'] })
       setPlayerName(''); setCommander(''); setStatus('active'); setResult('none'); setError('')
     },
-    onError: (e) => setError((e as Error).message),
+    onError: (e) => {
+      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
+      setError((e as Error).message)
+    },
   })
 
   return (

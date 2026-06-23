@@ -7,9 +7,10 @@ interface Props {
   entry: MatchEntry
   matchId: number
   onClose: () => void
+  onUnauthorized: () => void
 }
 
-export function EditEntryModal({ entry, matchId, onClose }: Props) {
+export function EditEntryModal({ entry, matchId, onClose, onUnauthorized }: Props) {
   const qc = useQueryClient()
   const [commander, setCommander] = useState(entry.commander_name ?? '')
   const [status, setStatus] = useState(entry.status)
@@ -19,7 +20,10 @@ export function EditEntryModal({ entry, matchId, onClose }: Props) {
   const mutation = useMutation({
     mutationFn: () => updateEntry(matchId, entry.id, { commander_name: commander || undefined, status, result }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-matches'] }); onClose() },
-    onError: (e) => setError((e as Error).message),
+    onError: (e) => {
+      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
+      setError((e as Error).message)
+    },
   })
 
   return (

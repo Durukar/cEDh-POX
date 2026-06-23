@@ -8,9 +8,10 @@ import { Link } from '@tanstack/react-router'
 
 interface Props {
   matchId: number
+  onUnauthorized: () => void
 }
 
-export function MatchDetail({ matchId }: Props) {
+export function MatchDetail({ matchId, onUnauthorized }: Props) {
   const { data: matches = [] } = useQuery({
     queryKey: ['admin-matches'],
     queryFn: fetchMatches,
@@ -28,7 +29,7 @@ export function MatchDetail({ matchId }: Props) {
         {match.notes && <span className="text-zinc-500 text-sm">{match.notes}</span>}
       </div>
 
-      <AddEntryForm matchId={matchId} />
+      <AddEntryForm matchId={matchId} onUnauthorized={onUnauthorized} />
 
       <div>
         <h2 className="text-base font-semibold mb-3">Players ({match.entries.length})</h2>
@@ -71,6 +72,7 @@ export function MatchDetail({ matchId }: Props) {
           entry={editEntry}
           matchId={matchId}
           onClose={() => setEditEntry(null)}
+          onUnauthorized={onUnauthorized}
         />
       )}
     </div>
