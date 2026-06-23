@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+[dev]
+port = 8787
+
 # Before deploying, run: wrangler d1 create cedh-pox-db
 # Then replace database_id below with the output ID.
 # Also set the admin token secret: wrangler secret put ADMIN_TOKEN
