@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createMatch } from '../../lib/api'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 
 export function CreateMatchForm({ onUnauthorized }: { onUnauthorized: () => void }) {
   const qc = useQueryClient()
@@ -12,9 +16,7 @@ export function CreateMatchForm({ onUnauthorized }: { onUnauthorized: () => void
     mutationFn: createMatch,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-matches'] })
-      setMatchNumber('')
-      setNotes('')
-      setError('')
+      setMatchNumber(''); setNotes(''); setError('')
     },
     onError: (e) => {
       if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
@@ -30,35 +32,33 @@ export function CreateMatchForm({ onUnauthorized }: { onUnauthorized: () => void
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 items-end">
-      <div>
-        <label className="block text-xs text-zinc-500 mb-1">Match #</label>
-        <input
+    <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+      <div className="space-y-1.5">
+        <Label htmlFor="match-number">Partida #</Label>
+        <Input
+          id="match-number"
           type="number"
           value={matchNumber}
           onChange={e => setMatchNumber(e.target.value)}
-          className="w-24 bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-zinc-500"
+          className="w-28"
           placeholder="1"
+          min={1}
         />
       </div>
-      <div className="flex-1">
-        <label className="block text-xs text-zinc-500 mb-1">Notes (optional)</label>
-        <input
-          type="text"
+      <div className="space-y-1.5 flex-1 min-w-48">
+        <Label htmlFor="notes">Notas <span className="text-muted-foreground">(opcional)</span></Label>
+        <Input
+          id="notes"
           value={notes}
           onChange={e => setNotes(e.target.value)}
-          className="w-full bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-zinc-500"
-          placeholder="Round notes..."
+          placeholder="Observações da rodada..."
         />
       </div>
-      <button
-        type="submit"
-        disabled={mutation.isPending}
-        className="bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors"
-      >
-        {mutation.isPending ? 'Creating...' : 'Create Match'}
-      </button>
-      {error && <p className="text-red-400 text-xs self-center">{error}</p>}
+      <Button type="submit" disabled={mutation.isPending}>
+        <Plus className="h-4 w-4 mr-1" />
+        {mutation.isPending ? 'Criando...' : 'Criar Partida'}
+      </Button>
+      {error && <p className="text-destructive text-xs self-center">{error}</p>}
     </form>
   )
 }

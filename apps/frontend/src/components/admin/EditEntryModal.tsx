@@ -2,6 +2,17 @@ import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { updateEntry } from '../../lib/api'
 import type { MatchEntry } from '@cedh-pox/shared'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 
 interface Props {
   entry: MatchEntry
@@ -27,41 +38,56 @@ export function EditEntryModal({ entry, matchId, onClose, onUnauthorized }: Prop
   })
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 w-full max-w-sm space-y-4">
-        <h3 className="font-semibold">Edit: {entry.player_name}</h3>
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1">Commander</label>
-          <input value={commander} onChange={e => setCommander(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-zinc-500" />
+    <Dialog open onOpenChange={open => { if (!open) onClose() }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Editar: {entry.player_name}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-commander">Comandante</Label>
+            <Input
+              id="edit-commander"
+              value={commander}
+              onChange={e => setCommander(e.target.value)}
+              placeholder="ex: Thrasios & Tymna"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Status</Label>
+            <Select value={status} onValueChange={v => setStatus(v as 'active' | 'disband')}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="disband">Desistiu</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Resultado</Label>
+            <Select value={result} onValueChange={v => setResult(v as 'win' | 'draw' | 'loss' | 'none')}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">—</SelectItem>
+                <SelectItem value="win">Vitória</SelectItem>
+                <SelectItem value="draw">Empate</SelectItem>
+                <SelectItem value="loss">Derrota</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {error && <p className="text-destructive text-xs">{error}</p>}
         </div>
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1">Status</label>
-          <select value={status} onChange={e => setStatus(e.target.value as 'active' | 'disband')}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none">
-            <option value="active">Active</option>
-            <option value="disband">Disband</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1">Result</label>
-          <select value={result} onChange={e => setResult(e.target.value as 'win' | 'draw' | 'loss' | 'none')}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none">
-            <option value="none">—</option>
-            <option value="win">Win</option>
-            <option value="draw">Draw</option>
-            <option value="loss">Loss</option>
-          </select>
-        </div>
-        {error && <p className="text-red-400 text-xs">{error}</p>}
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="text-sm text-zinc-500 hover:text-zinc-300 px-3 py-1.5">Cancel</button>
-          <button onClick={() => mutation.mutate()} disabled={mutation.isPending}
-            className="bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors">
-            {mutation.isPending ? 'Saving...' : 'Save'}
-          </button>
-        </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending}>
+            {mutation.isPending ? 'Salvando...' : 'Salvar'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

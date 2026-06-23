@@ -3,6 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchMatches, deleteMatch } from '../../lib/api'
 import { CreateMatchForm } from './CreateMatchForm'
 import { Link } from '@tanstack/react-router'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table'
+import { Eye, Trash2 } from 'lucide-react'
 
 interface Props {
   onUnauthorized: () => void
@@ -23,7 +31,6 @@ export function AdminDashboard({ onUnauthorized }: Props) {
 
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
 
-  // confirmation dialog
   function handleDelete(id: number) {
     if (confirmDelete === id) {
       deleteMutation.mutate(id)
@@ -34,58 +41,106 @@ export function AdminDashboard({ onUnauthorized }: Props) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-        <CreateMatchForm onUnauthorized={onUnauthorized} />
+        <h1 className="text-2xl font-semibold tracking-tight">Admin Dashboard</h1>
+        <p className="text-muted-foreground text-sm mt-1">Gerencie as partidas do campeonato</p>
       </div>
-      <div>
-        <h2 className="text-lg font-semibold mb-4">Matches</h2>
-        {isLoading ? (
-          <p className="text-zinc-500 text-sm">Loading...</p>
-        ) : matches.length === 0 ? (
-          <p className="text-zinc-500 text-sm">No matches yet.</p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-xs uppercase tracking-wider text-zinc-500 border-b border-zinc-800">
-                <th className="text-left py-2">Match #</th>
-                <th className="text-left py-2">Notes</th>
-                <th className="text-left py-2">Players</th>
-                <th className="text-left py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {matches.map(m => (
-                <tr key={m.id} className="border-t border-zinc-800 hover:bg-zinc-900">
-                  <td className="py-2 font-medium">#{m.match_number}</td>
-                  <td className="py-2 text-zinc-400">{m.notes ?? '—'}</td>
-                  <td className="py-2 text-zinc-400">{m.entries.length}</td>
-                  <td className="py-2 space-x-2">
-                    <Link
-                      to="/admin/matches/$matchId"
-                      params={{ matchId: String(m.id) }}
-                      className="text-zinc-400 hover:text-white text-xs underline"
-                    >
-                      View Entries
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(m.id)}
-                      className={`text-xs ${confirmDelete === m.id ? 'text-red-400 font-semibold' : 'text-zinc-500 hover:text-red-400'}`}
-                    >
-                      {confirmDelete === m.id ? 'Confirm Delete' : 'Delete'}
-                    </button>
-                    {confirmDelete === m.id && (
-                      <button onClick={() => setConfirmDelete(null)} className="text-xs text-zinc-500 hover:text-zinc-300">
-                        Cancel
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+
+      <Card className="border-border/50">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base">Nova Partida</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CreateMatchForm onUnauthorized={onUnauthorized} />
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold">Partidas</h2>
+          <Badge variant="secondary">{matches.length}</Badge>
+        </div>
+        <Separator className="bg-border/50" />
+        <div className="rounded-lg border border-border/50 overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border/50 hover:bg-transparent">
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium w-24">Partida</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium">Notas</TableHead>
+                <TableHead className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium w-24 text-center">Jogadores</TableHead>
+                <TableHead className="w-40" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground text-sm">
+                    Carregando...
+                  </TableCell>
+                </TableRow>
+              ) : matches.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center text-muted-foreground text-sm">
+                    Nenhuma partida ainda.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                matches.map(m => (
+                  <TableRow key={m.id} className="border-border/30 hover:bg-muted/20 transition-colors">
+                    <TableCell className="py-3 font-medium">
+                      <span className="text-muted-foreground text-xs mr-1">#</span>{m.match_number}
+                    </TableCell>
+                    <TableCell className="py-3 text-muted-foreground text-sm">{m.notes ?? '—'}</TableCell>
+                    <TableCell className="py-3 text-center">
+                      <Badge variant="secondary" className="text-xs">{m.entries.length}</Badge>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          to="/admin/matches/$matchId"
+                          params={{ matchId: String(m.id) }}
+                          className="inline-flex items-center h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] font-medium transition-all hover:bg-muted hover:text-foreground"
+                        >
+                          <Eye className="h-3.5 w-3.5 mr-1.5" />
+                          Ver
+                        </Link>
+                        {confirmDelete === m.id ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(m.id)}
+                              disabled={deleteMutation.isPending}
+                            >
+                              Confirmar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setConfirmDelete(null)}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-muted-foreground hover:text-destructive"
+                            onClick={() => setConfirmDelete(m.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   )

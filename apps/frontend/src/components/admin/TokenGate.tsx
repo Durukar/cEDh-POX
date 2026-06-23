@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { ShieldCheck } from 'lucide-react'
 
 interface TokenGateProps {
   onTokenSet: () => void
@@ -10,35 +15,41 @@ export function TokenGate({ onTokenSet }: TokenGateProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!token.trim()) { setError('Token is required'); return }
+    if (!token.trim()) { setError('Token obrigatório'); return }
     localStorage.setItem('admin_token', token.trim())
     onTokenSet()
   }
 
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-full max-w-sm">
-        <h2 className="text-xl font-bold mb-4">Admin Access</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-zinc-400 mb-1">Admin Token</label>
-            <input
-              type="password"
-              value={token}
-              onChange={e => setToken(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-zinc-500"
-              placeholder="Enter admin token"
-            />
-            {error && <p className="text-red-400 text-xs mt-1">{error}</p>}
+    <div className="flex items-center justify-center min-h-[70vh]">
+      <Card className="w-full max-w-sm border-border/50">
+        <CardHeader className="text-center pb-2">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <ShieldCheck className="h-6 w-6 text-muted-foreground" />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-zinc-700 hover:bg-zinc-600 text-white rounded px-4 py-2 text-sm font-medium transition-colors"
-          >
-            Enter
-          </button>
-        </form>
-      </div>
+          <CardTitle className="text-lg">Acesso Admin</CardTitle>
+          <CardDescription>Digite o token para continuar</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="token">Token</Label>
+              <Input
+                id="token"
+                type="password"
+                value={token}
+                onChange={e => setToken(e.target.value)}
+                placeholder="••••••••"
+                autoFocus
+              />
+              {error && <p className="text-destructive text-xs">{error}</p>}
+            </div>
+            <Button type="submit" className="w-full">
+              Entrar
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

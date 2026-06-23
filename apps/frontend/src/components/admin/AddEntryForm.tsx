@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createEntry } from '../../lib/api'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { UserPlus } from 'lucide-react'
 
 interface AddEntryFormProps {
   matchId: number
@@ -32,45 +38,74 @@ export function AddEntryForm({ matchId, onUnauthorized }: AddEntryFormProps) {
     },
   })
 
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!playerName.trim()) { setError('Nome do jogador obrigatório'); return }
+    mutation.mutate()
+  }
+
   return (
-    <form onSubmit={e => { e.preventDefault(); if (!playerName.trim()) { setError('Player name required'); return } mutation.mutate() }}
-      className="space-y-3 p-4 bg-zinc-900 rounded border border-zinc-800">
-      <h3 className="text-sm font-semibold text-zinc-300">Add Player</h3>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1">Player Name</label>
-          <input value={playerName} onChange={e => setPlayerName(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-zinc-500" />
-        </div>
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1">Commander (optional)</label>
-          <input value={commander} onChange={e => setCommander(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-zinc-500" />
-        </div>
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1">Status</label>
-          <select value={status} onChange={e => setStatus(e.target.value as 'active' | 'disband')}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none">
-            <option value="active">Active</option>
-            <option value="disband">Disband</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs text-zinc-500 mb-1">Result</label>
-          <select value={result} onChange={e => setResult(e.target.value as 'win' | 'draw' | 'loss' | 'none')}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1.5 text-sm focus:outline-none">
-            <option value="none">—</option>
-            <option value="win">Win</option>
-            <option value="draw">Draw</option>
-            <option value="loss">Loss</option>
-          </select>
-        </div>
-      </div>
-      {error && <p className="text-red-400 text-xs">{error}</p>}
-      <button type="submit" disabled={mutation.isPending}
-        className="bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors">
-        {mutation.isPending ? 'Adding...' : 'Add Player'}
-      </button>
-    </form>
+    <Card className="border-border/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-muted-foreground" />
+          Adicionar Jogador
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="player-name">Jogador</Label>
+              <Input
+                id="player-name"
+                value={playerName}
+                onChange={e => setPlayerName(e.target.value)}
+                placeholder="Nome do jogador"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="commander">Comandante <span className="text-muted-foreground">(opcional)</span></Label>
+              <Input
+                id="commander"
+                value={commander}
+                onChange={e => setCommander(e.target.value)}
+                placeholder="ex: Thrasios & Tymna"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={v => setStatus(v as 'active' | 'disband')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="disband">Desistiu</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Resultado</Label>
+              <Select value={result} onValueChange={v => setResult(v as 'win' | 'draw' | 'loss' | 'none')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">—</SelectItem>
+                  <SelectItem value="win">Vitória</SelectItem>
+                  <SelectItem value="draw">Empate</SelectItem>
+                  <SelectItem value="loss">Derrota</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {error && <p className="text-destructive text-xs">{error}</p>}
+          <Button type="submit" disabled={mutation.isPending} size="sm">
+            {mutation.isPending ? 'Adicionando...' : 'Adicionar'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
