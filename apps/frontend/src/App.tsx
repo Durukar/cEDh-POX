@@ -1,9 +1,4 @@
-function App() {
-  return (
-    <div>
-      <h1>cEDh-POX</h1>
-    </div>
-  )
+// App.tsx is no longer the entry point — routing is handled by TanStack Router in main.tsx
+export default function App() {
+  return null
 }
-
-export default App
