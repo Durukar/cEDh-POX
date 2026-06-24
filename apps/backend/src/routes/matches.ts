@@ -10,7 +10,7 @@ matches.get('/', async (c) => {
   const result = await db
     .prepare(
       `SELECT
-        m.id, m.match_number, m.notes, m.played_at,
+        m.id, m.match_number, m.notes, m.played_at, m.tournament_id,
         me.id AS entry_id, me.player_id, me.commander_name, me.status, me.result, me.points,
         p.name AS player_name
       FROM matches m
@@ -23,6 +23,7 @@ matches.get('/', async (c) => {
       match_number: number
       notes: string | null
       played_at: string
+      tournament_id: number
       entry_id: number | null
       player_id: number | null
       commander_name: string | null
@@ -41,6 +42,7 @@ matches.get('/', async (c) => {
         match_number: row.match_number,
         notes: row.notes,
         played_at: row.played_at,
+        tournament_id: row.tournament_id,
         entries: [],
       })
     }

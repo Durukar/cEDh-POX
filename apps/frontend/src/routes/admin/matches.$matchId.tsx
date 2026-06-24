@@ -1,10 +1,10 @@
 import { createRoute, useParams, useNavigate } from '@tanstack/react-router'
-import { adminIndexRoute } from './index'
+import { rootRoute } from '../__root'
 import { MatchDetail } from '../../components/admin/MatchDetail'
 
 export const adminMatchRoute = createRoute({
-  getParentRoute: () => adminIndexRoute,
-  path: 'matches/$matchId',
+  getParentRoute: () => rootRoute,
+  path: '/admin/matches/$matchId',
   component: MatchDetailPage,
 })
 

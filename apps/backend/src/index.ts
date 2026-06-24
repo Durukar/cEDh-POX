@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import leaderboardRoutes from './routes/leaderboard'
-import matchesRoutes from './routes/matches'
+import tournamentsRoutes from './routes/tournaments'
+import playersPublicRoutes from './routes/players-public'
+import adminTournamentsRoutes from './routes/admin-tournaments'
 import adminRoutes from './routes/admin'
+import playersRoutes from './routes/players'
 
 export type Env = {
   DB: D1Database
@@ -13,8 +15,13 @@ const app = new Hono<{ Bindings: Env }>()
 
 app.use('*', cors())
 
-app.route('/api/leaderboard', leaderboardRoutes)
-app.route('/api/matches', matchesRoutes)
+// Public routes
+app.route('/api/tournaments', tournamentsRoutes)
+app.route('/api/players', playersPublicRoutes)
+
+// Admin routes (more specific paths first)
+app.route('/api/admin/tournaments', adminTournamentsRoutes)
+app.route('/api/admin/players', playersRoutes)
 app.route('/api/admin', adminRoutes)
 
 export default app

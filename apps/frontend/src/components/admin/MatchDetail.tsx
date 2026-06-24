@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { fetchMatches } from '../../lib/api'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { fetchMatch, deleteEntry } from '../../lib/api'
 import type { MatchEntry } from '@cedh-pox/shared'
 import { AddEntryForm } from './AddEntryForm'
 import { EditEntryModal } from './EditEntryModal'
@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { ChevronLeft, Pencil } from 'lucide-react'
+import { ChevronLeft, Pencil, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -34,12 +34,24 @@ const resultVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'o
 }
 
 export function MatchDetail({ matchId, onUnauthorized }: Props) {
-  const { data: matches = [] } = useQuery({
-    queryKey: ['admin-matches'],
-    queryFn: fetchMatches,
+  const qc = useQueryClient()
+  const { data: match } = useQuery({
+    queryKey: ['admin-match', matchId],
+    queryFn: () => fetchMatch(matchId),
   })
-  const match = matches.find(m => m.id === matchId)
   const [editEntry, setEditEntry] = useState<MatchEntry | null>(null)
+  const [confirmRemoveId, setConfirmRemoveId] = useState<number | null>(null)
+
+  const removeMutation = useMutation({
+    mutationFn: (entryId: number) => deleteEntry(matchId, entryId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-match', matchId] })
+      setConfirmRemoveId(null)
+    },
+    onError: (e) => {
+      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
+    },
+  })
 
   if (!match) return (
     <p className="text-muted-foreground text-sm">Partida não encontrada.</p>
@@ -50,7 +62,8 @@ export function MatchDetail({ matchId, onUnauthorized }: Props) {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
-          to="/admin"
+          to="/admin/tournaments/$tournamentId"
+          params={{ tournamentId: String(match.tournament_id) }}
           className="inline-flex items-center h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -58,8 +71,14 @@ export function MatchDetail({ matchId, onUnauthorized }: Props) {
         </Link>
         <Separator orientation="vertical" className="h-5 bg-border/50" />
         <h1 className="text-xl font-semibold">Partida #{match.match_number}</h1>
+        <span className="text-muted-foreground text-sm">
+          {new Date(match.played_at + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+        </span>
         {match.notes && (
-          <span className="text-muted-foreground text-sm">{match.notes}</span>
+          <>
+            <Separator orientation="vertical" className="h-4 bg-border/50" />
+            <span className="text-muted-foreground text-sm">{match.notes}</span>
+          </>
         )}
       </div>
 
@@ -81,14 +100,14 @@ export function MatchDetail({ matchId, onUnauthorized }: Props) {
                 <TableHead className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium w-24 text-center">Status</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium w-28 text-center">Resultado</TableHead>
                 <TableHead className="text-xs uppercase tracking-wider text-muted-foreground/70 font-medium w-16 text-right">Pts</TableHead>
-                <TableHead className="w-12" />
+                <TableHead className="w-28" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {match.entries.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-20 text-center text-muted-foreground text-sm">
-                    Nenhum jogador adicionado ainda.
+                    Nenhum jogador adicionado ainda. Use o formulário acima para adicionar participantes.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -114,14 +133,46 @@ export function MatchDetail({ matchId, onUnauthorized }: Props) {
                     </TableCell>
                     <TableCell className="py-3 text-right font-bold tabular-nums">{entry.points}</TableCell>
                     <TableCell className="py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                        onClick={() => setEditEntry(entry)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                          onClick={() => { setEditEntry(entry); setConfirmRemoveId(null) }}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        {confirmRemoveId === entry.id ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="h-7 text-xs px-2"
+                              onClick={() => removeMutation.mutate(entry.id)}
+                              disabled={removeMutation.isPending}
+                            >
+                              Remover
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs px-2"
+                              onClick={() => setConfirmRemoveId(null)}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => setConfirmRemoveId(entry.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

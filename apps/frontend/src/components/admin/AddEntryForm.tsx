@@ -1,36 +1,65 @@
-import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createEntry } from '../../lib/api'
+import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { createEntry, fetchPlayers } from '../../lib/api'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { UserPlus } from 'lucide-react'
+import { ChevronDown, Plus, UserPlus } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface AddEntryFormProps {
   matchId: number
   onUnauthorized: () => void
 }
 
+function NativeSelect({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className="relative">
+      <select
+        className={cn(
+          'h-8 w-full appearance-none rounded-lg border border-input bg-transparent pl-2.5 pr-7 py-1 text-sm text-foreground transition-colors outline-none focus:border-ring focus:ring-3 focus:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  )
+}
+
 export function AddEntryForm({ matchId, onUnauthorized }: AddEntryFormProps) {
   const qc = useQueryClient()
-  const [playerName, setPlayerName] = useState('')
+  const [playerId, setPlayerId] = useState('')
   const [commander, setCommander] = useState('')
   const [status, setStatus] = useState<'active' | 'disband'>('active')
   const [result, setResult] = useState<'win' | 'draw' | 'loss' | 'none'>('none')
   const [error, setError] = useState('')
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [dropdownRect, setDropdownRect] = useState({ top: 0, left: 0, width: 0 })
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const { data: players = [] } = useQuery({
+    queryKey: ['admin-players'],
+    queryFn: fetchPlayers,
+  })
 
   const mutation = useMutation({
     mutationFn: () => createEntry(matchId, {
-      player_name: playerName,
+      player_id: Number(playerId),
       commander_name: commander || undefined,
       status,
       result,
     }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-matches'] })
-      setPlayerName(''); setCommander(''); setStatus('active'); setResult('none'); setError('')
+      qc.invalidateQueries({ queryKey: ['admin-match', matchId] })
+      setPlayerId(''); setCommander(''); setStatus('active'); setResult('none'); setError('')
+      setSuggestions([]); setShowSuggestions(false)
     },
     onError: (e) => {
       if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
@@ -38,9 +67,40 @@ export function AddEntryForm({ matchId, onUnauthorized }: AddEntryFormProps) {
     },
   })
 
+  function handleCommanderChange(value: string) {
+    setCommander(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (value.length < 2) { setSuggestions([]); setShowSuggestions(false); return }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(value)}`)
+        if (res.ok) {
+          const json = await res.json() as { data: string[] }
+          const data = json.data?.slice(0, 8) ?? []
+          setSuggestions(data)
+          if (data.length > 0 && inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect()
+            setDropdownRect({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+            setShowSuggestions(true)
+          } else {
+            setShowSuggestions(false)
+          }
+        }
+      } catch {
+        setSuggestions([])
+      }
+    }, 300)
+  }
+
+  function selectSuggestion(name: string) {
+    setCommander(name)
+    setSuggestions([])
+    setShowSuggestions(false)
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!playerName.trim()) { setError('Nome do jogador obrigatório'); return }
+    if (!playerId) { setError('Selecione um jogador'); return }
     mutation.mutate()
   }
 
@@ -53,59 +113,72 @@ export function AddEntryForm({ matchId, onUnauthorized }: AddEntryFormProps) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="player-name">Jogador</Label>
-              <Input
-                id="player-name"
-                value={playerName}
-                onChange={e => setPlayerName(e.target.value)}
-                placeholder="Nome do jogador"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="commander">Comandante <span className="text-muted-foreground">(opcional)</span></Label>
-              <Input
-                id="commander"
-                value={commander}
-                onChange={e => setCommander(e.target.value)}
-                placeholder="ex: Thrasios & Tymna"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={v => setStatus(v as 'active' | 'disband')}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="disband">Desistiu</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Resultado</Label>
-              <Select value={result} onValueChange={v => setResult(v as 'win' | 'draw' | 'loss' | 'none')}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">—</SelectItem>
-                  <SelectItem value="win">Vitória</SelectItem>
-                  <SelectItem value="draw">Empate</SelectItem>
-                  <SelectItem value="loss">Derrota</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 items-end">
+          <div className="space-y-1.5 min-w-40 flex-1">
+            <Label>Jogador</Label>
+            <NativeSelect value={playerId} onChange={e => { setPlayerId(e.target.value); setError('') }}>
+              <option value="" disabled>Selecionar...</option>
+              {players.map(p => (
+                <option key={p.id} value={String(p.id)}>{p.name}</option>
+              ))}
+            </NativeSelect>
           </div>
-          {error && <p className="text-destructive text-xs">{error}</p>}
-          <Button type="submit" disabled={mutation.isPending} size="sm">
+          <div className="space-y-1.5 min-w-48 flex-[2]">
+            <Label htmlFor="add-commander">
+              Comandante <span className="text-muted-foreground">(opcional)</span>
+            </Label>
+            <Input
+              ref={inputRef}
+              id="add-commander"
+              value={commander}
+              onChange={e => handleCommanderChange(e.target.value)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              placeholder="ex: Thrasios & Tymna"
+              autoComplete="off"
+            />
+          </div>
+          <div className="space-y-1.5 w-28">
+            <Label>Status</Label>
+            <NativeSelect value={status} onChange={e => setStatus(e.target.value as 'active' | 'disband')}>
+              <option value="active">Ativo</option>
+              <option value="disband">Desistiu</option>
+            </NativeSelect>
+          </div>
+          <div className="space-y-1.5 w-28">
+            <Label>Resultado</Label>
+            <NativeSelect value={result} onChange={e => setResult(e.target.value as 'win' | 'draw' | 'loss' | 'none')}>
+              <option value="none">—</option>
+              <option value="win">Vitória</option>
+              <option value="draw">Empate</option>
+              <option value="loss">Derrota</option>
+            </NativeSelect>
+          </div>
+          <Button type="submit" size="sm" disabled={mutation.isPending}>
+            <Plus className="h-4 w-4 mr-1" />
             {mutation.isPending ? 'Adicionando...' : 'Adicionar'}
           </Button>
         </form>
+        {error && <p className="text-destructive text-xs mt-2">{error}</p>}
       </CardContent>
+
+      {showSuggestions && suggestions.length > 0 && createPortal(
+        <ul
+          style={{ top: dropdownRect.top, left: dropdownRect.left, width: dropdownRect.width }}
+          className="fixed z-[9999] rounded-lg border border-border bg-popover shadow-lg overflow-hidden"
+        >
+          {suggestions.map(name => (
+            <li
+              key={name}
+              onMouseDown={() => selectSuggestion(name)}
+              className="px-3 py-2 text-sm cursor-pointer hover:bg-muted transition-colors"
+            >
+              {name}
+            </li>
+          ))}
+        </ul>,
+        document.body,
+      )}
     </Card>
   )
 }
