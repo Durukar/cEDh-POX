@@ -13,10 +13,9 @@ function todayISO() {
 
 interface Props {
   tournamentId: number
-  onUnauthorized: () => void
 }
 
-export function CreateMatchForm({ tournamentId, onUnauthorized }: Props) {
+export function CreateMatchForm({ tournamentId }: Props) {
   const qc = useQueryClient()
   const [matchNumber, setMatchNumber] = useState('')
   const [playedAt, setPlayedAt] = useState(todayISO)
@@ -30,10 +29,7 @@ export function CreateMatchForm({ tournamentId, onUnauthorized }: Props) {
       qc.invalidateQueries({ queryKey: ['admin-tournaments'] })
       setMatchNumber(''); setNotes(''); setPlayedAt(todayISO()); setError('')
     },
-    onError: (e) => {
-      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
-      setError((e as Error).message)
-    },
+    onError: (e) => { setError((e as Error).message) },
   })
 
   function handleSubmit(e: React.FormEvent) {

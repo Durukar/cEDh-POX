@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils'
 
 interface AddEntryFormProps {
   matchId: number
-  onUnauthorized: () => void
 }
 
 function NativeSelect({ className, children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
@@ -31,7 +30,7 @@ function NativeSelect({ className, children, ...props }: React.SelectHTMLAttribu
   )
 }
 
-export function AddEntryForm({ matchId, onUnauthorized }: AddEntryFormProps) {
+export function AddEntryForm({ matchId }: AddEntryFormProps) {
   const qc = useQueryClient()
   const [playerId, setPlayerId] = useState('')
   const [commander, setCommander] = useState('')
@@ -62,7 +61,6 @@ export function AddEntryForm({ matchId, onUnauthorized }: AddEntryFormProps) {
       setSuggestions([]); setShowSuggestions(false)
     },
     onError: (e) => {
-      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
       setError((e as Error).message)
     },
   })

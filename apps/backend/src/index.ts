@@ -8,7 +8,8 @@ import playersRoutes from './routes/players'
 
 export type Env = {
   DB: D1Database
-  ADMIN_TOKEN: string
+  CF_ACCESS_AUD: string
+  CF_ACCESS_TEAM_DOMAIN: string
 }
 
 const app = new Hono<{ Bindings: Env }>()

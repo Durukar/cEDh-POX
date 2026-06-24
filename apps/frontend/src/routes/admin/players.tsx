@@ -1,4 +1,4 @@
-import { createRoute, useNavigate } from '@tanstack/react-router'
+import { createRoute } from '@tanstack/react-router'
 import { rootRoute } from '../__root'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -23,27 +23,10 @@ export const adminPlayersRoute = createRoute({
 })
 
 function PlayersPage() {
-  const navigate = useNavigate()
-  const hasToken = !!localStorage.getItem('admin_token')
-
-  if (!hasToken) {
-    navigate({ to: '/admin' })
-    return null
-  }
-
-  function handleUnauthorized() {
-    localStorage.removeItem('admin_token')
-    navigate({ to: '/admin' })
-  }
-
-  return <PlayerManagement onUnauthorized={handleUnauthorized} />
+  return <PlayerManagement />
 }
 
-interface Props {
-  onUnauthorized: () => void
-}
-
-function PlayerManagement({ onUnauthorized }: Props) {
+function PlayerManagement() {
   const qc = useQueryClient()
   const { data: players = [], isLoading } = useQuery({
     queryKey: ['admin-players'],
@@ -66,8 +49,7 @@ function PlayerManagement({ onUnauthorized }: Props) {
       setAddError('')
     },
     onError: (e) => {
-      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
-      setAddError((e as Error).message)
+setAddError((e as Error).message)
     },
   })
 
@@ -80,8 +62,7 @@ function PlayerManagement({ onUnauthorized }: Props) {
       setEditError('')
     },
     onError: (e) => {
-      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
-      setEditError((e as Error).message)
+setEditError((e as Error).message)
     },
   })
 
@@ -93,8 +74,7 @@ function PlayerManagement({ onUnauthorized }: Props) {
       setDeleteError(prev => { const n = { ...prev }; delete n[id]; return n })
     },
     onError: (e, id) => {
-      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
-      setConfirmDeleteId(null)
+setConfirmDeleteId(null)
       setDeleteError(prev => ({ ...prev, [id]: (e as Error).message }))
     },
   })

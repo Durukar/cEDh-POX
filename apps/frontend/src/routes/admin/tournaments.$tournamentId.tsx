@@ -1,4 +1,4 @@
-import { createRoute, useParams, useNavigate, Link } from '@tanstack/react-router'
+import { createRoute, useParams, Link } from '@tanstack/react-router'
 import { rootRoute } from '../__root'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchTournament, fetchAdminMatches, deleteMatch } from '../../lib/api'
@@ -17,22 +17,11 @@ export const adminTournamentDetailRoute = createRoute({
 })
 
 function AdminTournamentDetailPage() {
-  const navigate = useNavigate()
-  const hasToken = !!localStorage.getItem('admin_token')
-  if (!hasToken) { navigate({ to: '/admin' }); return null }
-
   const { tournamentId } = useParams({ from: '/admin/tournaments/$tournamentId' })
-  const id = Number(tournamentId)
-
-  function handleUnauthorized() {
-    localStorage.removeItem('admin_token')
-    navigate({ to: '/admin' })
-  }
-
-  return <TournamentMatchManager tournamentId={id} onUnauthorized={handleUnauthorized} />
+  return <TournamentMatchManager tournamentId={Number(tournamentId)} />
 }
 
-function TournamentMatchManager({ tournamentId, onUnauthorized }: { tournamentId: number; onUnauthorized: () => void }) {
+function TournamentMatchManager({ tournamentId }: { tournamentId: number }) {
   const qc = useQueryClient()
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
 
@@ -49,7 +38,7 @@ function TournamentMatchManager({ tournamentId, onUnauthorized }: { tournamentId
   const deleteMutation = useMutation({
     mutationFn: deleteMatch,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-matches', tournamentId] }); qc.invalidateQueries({ queryKey: ['admin-tournaments'] }); setConfirmDelete(null) },
-    onError: (e) => { if ((e as Error).message === 'UNAUTHORIZED') onUnauthorized() },
+    onError: () => {},
   })
 
   function handleDelete(id: number) {
@@ -82,7 +71,7 @@ function TournamentMatchManager({ tournamentId, onUnauthorized }: { tournamentId
       </div>
 
       {!isFinished && (
-        <CreateMatchForm tournamentId={tournamentId} onUnauthorized={onUnauthorized} />
+        <CreateMatchForm tournamentId={tournamentId} />
       )}
       {isFinished && (
         <p className="text-sm text-muted-foreground border border-border/50 rounded-lg px-4 py-3">

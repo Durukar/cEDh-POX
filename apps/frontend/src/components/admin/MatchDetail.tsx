@@ -16,7 +16,6 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   matchId: number
-  onUnauthorized: () => void
 }
 
 const resultLabel: Record<string, string> = {
@@ -33,7 +32,7 @@ const resultVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'o
   none: 'outline',
 }
 
-export function MatchDetail({ matchId, onUnauthorized }: Props) {
+export function MatchDetail({ matchId }: Props) {
   const qc = useQueryClient()
   const { data: match } = useQuery({
     queryKey: ['admin-match', matchId],
@@ -47,9 +46,6 @@ export function MatchDetail({ matchId, onUnauthorized }: Props) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-match', matchId] })
       setConfirmRemoveId(null)
-    },
-    onError: (e) => {
-      if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }
     },
   })
 
@@ -83,7 +79,7 @@ export function MatchDetail({ matchId, onUnauthorized }: Props) {
       </div>
 
       {/* Add player form */}
-      <AddEntryForm matchId={matchId} onUnauthorized={onUnauthorized} />
+      <AddEntryForm matchId={matchId} />
 
       {/* Entries table */}
       <div className="space-y-3">
@@ -187,7 +183,6 @@ export function MatchDetail({ matchId, onUnauthorized }: Props) {
           entry={editEntry}
           matchId={matchId}
           onClose={() => setEditEntry(null)}
-          onUnauthorized={onUnauthorized}
         />
       )}
     </div>

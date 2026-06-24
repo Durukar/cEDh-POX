@@ -1,4 +1,4 @@
-import { createRoute, useParams, useNavigate } from '@tanstack/react-router'
+import { createRoute, useParams } from '@tanstack/react-router'
 import { rootRoute } from '../__root'
 import { MatchDetail } from '../../components/admin/MatchDetail'
 
@@ -10,18 +10,5 @@ export const adminMatchRoute = createRoute({
 
 function MatchDetailPage() {
   const { matchId } = useParams({ from: '/admin/matches/$matchId' })
-  const navigate = useNavigate()
-  const hasToken = !!localStorage.getItem('admin_token')
-
-  if (!hasToken) {
-    navigate({ to: '/admin' })
-    return null
-  }
-
-  function handleUnauthorized() {
-    localStorage.removeItem('admin_token')
-    navigate({ to: '/admin' })
-  }
-
-  return <MatchDetail matchId={Number(matchId)} onUnauthorized={handleUnauthorized} />
+  return <MatchDetail matchId={Number(matchId)} />
 }

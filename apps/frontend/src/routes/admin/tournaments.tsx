@@ -1,4 +1,4 @@
-import { createRoute, Link, useNavigate } from '@tanstack/react-router'
+import { createRoute, Link } from '@tanstack/react-router'
 import { rootRoute } from '../__root'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -21,19 +21,10 @@ export const adminTournamentsRoute = createRoute({
 })
 
 function AdminTournamentsPage() {
-  const navigate = useNavigate()
-  const hasToken = !!localStorage.getItem('admin_token')
-  if (!hasToken) { navigate({ to: '/admin' }); return null }
-
-  function handleUnauthorized() {
-    localStorage.removeItem('admin_token')
-    navigate({ to: '/admin' })
-  }
-
-  return <TournamentManagement onUnauthorized={handleUnauthorized} />
+  return <TournamentManagement />
 }
 
-function TournamentManagement({ onUnauthorized }: { onUnauthorized: () => void }) {
+function TournamentManagement() {
   const qc = useQueryClient()
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ['admin-tournaments'],
@@ -53,26 +44,26 @@ function TournamentManagement({ onUnauthorized }: { onUnauthorized: () => void }
   const addMutation = useMutation({
     mutationFn: () => createTournament({ name: newName.trim(), description: newDesc.trim() || undefined }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-tournaments'] }); setNewName(''); setNewDesc(''); setAddError('') },
-    onError: (e) => { if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }; setAddError((e as Error).message) },
+    onError: (e) => { setAddError((e as Error).message) },
   })
 
   const editMutation = useMutation({
     mutationFn: ({ id, name, description }: { id: number; name: string; description: string }) =>
       updateTournament(id, { name, description: description || undefined }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-tournaments'] }); setEditingId(null); setEditError('') },
-    onError: (e) => { if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }; setEditError((e as Error).message) },
+    onError: (e) => { setEditError((e as Error).message) },
   })
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: 'active' | 'finished' }) => updateTournament(id, { status }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-tournaments'] }),
-    onError: (e) => { if ((e as Error).message === 'UNAUTHORIZED') onUnauthorized() },
+    onError: () => {},
   })
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteTournament(id),
     onSuccess: (_d, id) => { qc.invalidateQueries({ queryKey: ['admin-tournaments'] }); setConfirmDeleteId(null); setDeleteError(prev => { const n = { ...prev }; delete n[id]; return n }) },
-    onError: (e, id) => { if ((e as Error).message === 'UNAUTHORIZED') { onUnauthorized(); return }; setConfirmDeleteId(null); setDeleteError(prev => ({ ...prev, [id]: (e as Error).message })) },
+    onError: (e, id) => { setConfirmDeleteId(null); setDeleteError(prev => ({ ...prev, [id]: (e as Error).message })) },
   })
 
   function startEdit(t: Tournament) {

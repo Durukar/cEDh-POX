@@ -1,5 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
-import { Link } from '@tanstack/react-router'
+import { useNavigate, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { fetchAdminTournaments } from '../../lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,11 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Eye, Trophy, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface Props {
-  onUnauthorized: () => void
-}
-
-export function AdminDashboard({ onUnauthorized: _onUnauthorized }: Props) {
+export function AdminDashboard() {
   const navigate = useNavigate()
   const { data: tournaments = [], isLoading } = useQuery({
     queryKey: ['admin-tournaments'],
