@@ -2,26 +2,13 @@ import type { GlobalStandingsEntry, Match, MatchEntry, Player, PlayerProfile, St
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787'
 
-let cfJwtCache: { token: string; exp: number } | null = null
-
-async function getCfAccessJwt(): Promise<string | null> {
-  const now = Math.floor(Date.now() / 1000)
-  if (cfJwtCache && cfJwtCache.exp > now + 60) return cfJwtCache.token
-  try {
-    const res = await fetch('/cdn-cgi/access/get-identity', { credentials: 'include' })
-    if (!res.ok) return null
-    const { jwt } = await res.json() as { jwt: string }
-    const [, payload] = jwt.split('.')
-    const { exp } = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { exp: number }
-    cfJwtCache = { token: jwt, exp }
-    return jwt
-  } catch {
-    return null
-  }
+function getCfAccessJwt(): string | null {
+  const cookie = document.cookie.split(';').find(c => c.trim().startsWith('CF_Authorization='))
+  return cookie ? cookie.trim().slice('CF_Authorization='.length) : null
 }
 
 async function adminFetch(input: string, init?: RequestInit): Promise<Response> {
-  const jwt = await getCfAccessJwt()
+  const jwt = getCfAccessJwt()
   const headers = new Headers(init?.headers)
   if (jwt) headers.set('Cf-Access-Jwt-Assertion', jwt)
   return fetch(input, { credentials: 'include', ...init, headers })
