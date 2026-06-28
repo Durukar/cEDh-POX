@@ -9,6 +9,7 @@ port = 8787
 # Secrets required in production (set via wrangler secret put):
 # CF_ACCESS_AUD — Application Audience tag from Cloudflare Zero Trust
 # CF_ACCESS_TEAM_DOMAIN — Team name (e.g. "ladavilateam")
+
 [[d1_databases]]
 binding = "DB"
 database_name = "cedh-pox-db"
@@ -16,3 +17,6 @@ database_id = "a3767dcd-ab0f-469b-a6d4-a26c5059e594"
 
 [vars]
 ENVIRONMENT = "production"
+# Allowed CORS origin for admin API calls — must match the deployed frontend URL.
+# Update this if the custom domain changes. Also allow cedh-pox.pages.dev if needed.
+FRONTEND_ORIGIN = "https://cedh-pox.spellbook.app.br"

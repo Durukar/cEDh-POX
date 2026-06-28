@@ -10,11 +10,18 @@ export type Env = {
   DB: D1Database
   CF_ACCESS_AUD: string
   CF_ACCESS_TEAM_DOMAIN: string
+  FRONTEND_ORIGIN: string
 }
 
 const app = new Hono<{ Bindings: Env }>()
 
-app.use('*', cors())
+app.use('*', cors({
+  origin: (origin, c) => {
+    const allowed = new Set([c.env.FRONTEND_ORIGIN, 'http://localhost:5173'].filter(Boolean))
+    return allowed.has(origin ?? '') ? origin : null
+  },
+  credentials: true,
+}))
 
 // Public routes
 app.route('/api/tournaments', tournamentsRoutes)

@@ -6,9 +6,6 @@ CREATE TABLE IF NOT EXISTS tournaments (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Insert default tournament before altering matches (so DEFAULT 1 is a valid row)
-INSERT INTO tournaments (id, name, status) VALUES (1, 'POX — Temporada 1', 'finished');
-
 -- SQLite does not allow ADD COLUMN with REFERENCES + DEFAULT; omit FK constraint here
 ALTER TABLE matches ADD COLUMN tournament_id INTEGER DEFAULT 1;
 

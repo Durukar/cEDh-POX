@@ -2,6 +2,10 @@ import type { GlobalStandingsEntry, Match, MatchEntry, Player, PlayerProfile, St
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8787'
 
+function adminFetch(input: string, init?: RequestInit): Promise<Response> {
+  return fetch(input, { credentials: 'include', ...init })
+}
+
 // --- Public: Tournaments ---
 
 export async function fetchTournaments(): Promise<Tournament[]> {
@@ -45,13 +49,13 @@ export async function fetchPlayerProfile(playerId: number): Promise<PlayerProfil
 // --- Admin: Tournaments ---
 
 export async function fetchAdminTournaments(): Promise<(Tournament & { match_count: number })[]> {
-  const res = await fetch(`${BASE}/api/admin/tournaments`)
+  const res = await adminFetch(`${BASE}/api/admin/tournaments`)
   if (!res.ok) throw new Error('Failed to fetch tournaments')
   return res.json()
 }
 
 export async function createTournament(data: { name: string; description?: string }): Promise<Tournament> {
-  const res = await fetch(`${BASE}/api/admin/tournaments`, {
+  const res = await adminFetch(`${BASE}/api/admin/tournaments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -61,7 +65,7 @@ export async function createTournament(data: { name: string; description?: strin
 }
 
 export async function updateTournament(id: number, data: { name?: string; description?: string; status?: 'active' | 'finished' }): Promise<Tournament> {
-  const res = await fetch(`${BASE}/api/admin/tournaments/${id}`, {
+  const res = await adminFetch(`${BASE}/api/admin/tournaments/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -71,7 +75,7 @@ export async function updateTournament(id: number, data: { name?: string; descri
 }
 
 export async function deleteTournament(id: number): Promise<void> {
-  const res = await fetch(`${BASE}/api/admin/tournaments/${id}`, { method: 'DELETE' })
+  const res = await adminFetch(`${BASE}/api/admin/tournaments/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(await res.text())
 }
 
@@ -82,13 +86,13 @@ export async function fetchAdminMatches(tournamentId: number): Promise<Match[]> 
 }
 
 export async function fetchMatch(matchId: number): Promise<Match> {
-  const res = await fetch(`${BASE}/api/admin/matches/${matchId}`)
+  const res = await adminFetch(`${BASE}/api/admin/matches/${matchId}`)
   if (!res.ok) throw new Error('Match not found')
   return res.json()
 }
 
 export async function createMatch(data: { match_number: number; notes?: string; played_at: string; tournament_id: number }): Promise<Omit<Match, 'entries'>> {
-  const res = await fetch(`${BASE}/api/admin/matches`, {
+  const res = await adminFetch(`${BASE}/api/admin/matches`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -98,7 +102,7 @@ export async function createMatch(data: { match_number: number; notes?: string; 
 }
 
 export async function deleteMatch(matchId: number): Promise<void> {
-  const res = await fetch(`${BASE}/api/admin/matches/${matchId}`, { method: 'DELETE' })
+  const res = await adminFetch(`${BASE}/api/admin/matches/${matchId}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(await res.text())
 }
 
@@ -108,7 +112,7 @@ export async function createEntry(
   matchId: number,
   data: { player_id: number; commander_name?: string; status: 'active' | 'disband'; result: 'win' | 'draw' | 'loss' | 'none' }
 ): Promise<MatchEntry> {
-  const res = await fetch(`${BASE}/api/admin/matches/${matchId}/entries`, {
+  const res = await adminFetch(`${BASE}/api/admin/matches/${matchId}/entries`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -122,7 +126,7 @@ export async function updateEntry(
   entryId: number,
   data: Partial<{ commander_name: string; status: 'active' | 'disband'; result: 'win' | 'draw' | 'loss' | 'none' }>
 ): Promise<MatchEntry> {
-  const res = await fetch(`${BASE}/api/admin/matches/${matchId}/entries/${entryId}`, {
+  const res = await adminFetch(`${BASE}/api/admin/matches/${matchId}/entries/${entryId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -132,20 +136,20 @@ export async function updateEntry(
 }
 
 export async function deleteEntry(matchId: number, entryId: number): Promise<void> {
-  const res = await fetch(`${BASE}/api/admin/matches/${matchId}/entries/${entryId}`, { method: 'DELETE' })
+  const res = await adminFetch(`${BASE}/api/admin/matches/${matchId}/entries/${entryId}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(await res.text())
 }
 
 // --- Admin: Players ---
 
 export async function fetchPlayers(): Promise<Player[]> {
-  const res = await fetch(`${BASE}/api/admin/players`)
+  const res = await adminFetch(`${BASE}/api/admin/players`)
   if (!res.ok) throw new Error('Failed to fetch players')
   return res.json()
 }
 
 export async function createPlayer(name: string): Promise<Player> {
-  const res = await fetch(`${BASE}/api/admin/players`, {
+  const res = await adminFetch(`${BASE}/api/admin/players`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -155,7 +159,7 @@ export async function createPlayer(name: string): Promise<Player> {
 }
 
 export async function updatePlayer(id: number, name: string): Promise<Player> {
-  const res = await fetch(`${BASE}/api/admin/players/${id}`, {
+  const res = await adminFetch(`${BASE}/api/admin/players/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -165,6 +169,6 @@ export async function updatePlayer(id: number, name: string): Promise<Player> {
 }
 
 export async function deletePlayer(id: number): Promise<void> {
-  const res = await fetch(`${BASE}/api/admin/players/${id}`, { method: 'DELETE' })
+  const res = await adminFetch(`${BASE}/api/admin/players/${id}`, { method: 'DELETE' })
   if (!res.ok) throw new Error(await res.text())
 }
